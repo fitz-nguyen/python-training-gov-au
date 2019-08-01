@@ -1,0 +1,40 @@
+from TrainingGov import TrainingGovAPI, Organisations, TrainingComponents
+from pprint import pprint
+import json
+
+api = TrainingGovAPI("WebService.Read", "Asdf098")
+
+orgs = TrainingComponents()
+# search = orgs.search()
+# print(search.Results.TrainingComponentSummary.__len__())
+# print(dir(search.Results.TrainingComponentSummary[0]))
+# print(type(search.Results.TrainingComponentSummary[0]))
+# print(search.Results.TrainingComponentSummary[0])
+# print(type(search.Results))
+# print(dir(search.Results))
+
+print("#####################################################")
+# # Passing RTO Code
+results = orgs.getDetails("ACM10")
+print('Classifications', results['response'].Classifications)
+print('code', results['response'].Code)
+print('ComponentType', results['response'].ComponentType)
+print('Contacts', results['response'].Contacts)
+print('CreatedDate', results['response'].CreatedDate)
+print('CurrencyStatus', results['response'].CurrencyStatus)
+print('DataManagers', results['response'].DataManagers)
+print('IsLegacyData', results['response'].IsLegacyData)
+print('IscOrganisationCode', results['response'].IscOrganisationCode)
+print('MappingInformation', results['response'].MappingInformation)
+print('UsageRecommendations', results['response'].UsageRecommendations.UsageRecommendation[0].StartDate)
+print('UsageRecommendations', type(results['response'].UsageRecommendations.UsageRecommendation[0].StartDate))
+print('UpdatedDate', results['response'].UpdatedDate)
+print('Title', results['response'].Title)
+print('ReverseMappingInformation', results['response'].ReverseMappingInformation)
+# print('Releases', results['response'].Releases.Release[1])
+print('Releases sort', results['response'].Releases.Release.sort(ReleaseNumber=True))
+print('type Releases', type(results['response'].Releases.Release[1]))
+print('len Releases', len(results['response'].Releases.Release[1]))
+print('dir Releases [1]', dir(results['response'].Releases.Release[1]))
+print('dir Releases', dir(results['response'].Releases.Release))
+print(dir(results['response']))

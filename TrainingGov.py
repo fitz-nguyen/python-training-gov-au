@@ -14,9 +14,10 @@ class TrainingGovAPI:
     def __init__(self, username, password):
         self.username = username
         self.password = password
-   
+
         self.token = UsernameToken(self.username, self.password)
         self.security.tokens.append(self.token)
+
 
 class TrainingComponents(TrainingGovAPI):
     baseurl = "https://ws.sandbox.training.gov.au/Deewr.Tga.WebServices/TrainingComponentServiceV2.svc?wsdl"
@@ -28,24 +29,24 @@ class TrainingComponents(TrainingGovAPI):
     def search(self, filterTerm=None, searchCode=True, searchTitle=False):
         request = self.client.factory.create('TrainingComponentSearchRequest')
 
-        #search term
+        # search term
         request.Filter = filterTerm
-        
-        #searches by unit/qual/course code
+
+        # searches by unit/qual/course code
         request.SearchCode = searchCode
 
-        #searches by uniit/qual/course title
+        # searches by uniit/qual/course title
         request.SearchTitle = searchTitle
 
-        #Filtering options for the types of components returned by a search
+        # Filtering options for the types of components returned by a search
         request.TrainingComponentTypes = [{
-            "IncludeAccreditedCourse" : 0,
-            "IncludeAccreditedCourseModule" : 0,
-            "IncludeQualification" : 0,
-            "IncludeSkillSet" : 0,
-            "IncludeTrainingPackage" : 0,
-            "IncludeUnit" : 1,
-            "IncludeUnitContextualisation" : 0
+            "IncludeAccreditedCourse": 0,
+            "IncludeAccreditedCourseModule": 0,
+            "IncludeQualification": 0,
+            "IncludeSkillSet": 0,
+            "IncludeTrainingPackage": 0,
+            "IncludeUnit": 1,
+            "IncludeUnitContextualisation": 0
         }]
 
         return self.client.service.Search(request)
@@ -54,88 +55,97 @@ class TrainingComponents(TrainingGovAPI):
         request = self.client.factory.create('TrainingComponentDetailsRequest')
 
         request.Code = code
-        try: 
+        try:
             result = self.client.service.GetDetails(request)
             if result.ComponentType == "Qualification":
 
                 parsed_result = {
-                    "type" : result.ComponentType,
-                    "response" : result,
-                    "title" : result.Title,
-                    "currency_status" : result.CurrencyStatus,
-                    "release_count" : len(result.Releases["Release"]),
-                    "releases" : self.__buildReleases(result.Releases),
-                    "training_package" : {
-                        "code" : result.ParentCode,
-                        "title" : result.ParentTitle
+                    "type": result.ComponentType,
+                    "response": result,
+                    "title": result.Title,
+                    "currency_status": result.CurrencyStatus,
+                    "release_count": len(result.Releases["Release"]),
+                    "releases": self.__buildReleases(result.Releases),
+                    "training_package": {
+                        "code": result.ParentCode,
+                        "title": result.ParentTitle
                     }
                 }
 
             elif result.ComponentType == "Unit":
-                
+
                 parsed_result = {
-                    "type" : result.ComponentType,
-                    "response" : result,
-                    "title" : result.Title,
-                    "currency_status" : result.CurrencyStatus
+                    "type": result.ComponentType,
+                    "response": result,
+                    "title": result.Title,
+                    "currency_status": result.CurrencyStatus
+                }
+
+            elif result.ComponentType == "TrainingPackage":
+
+                parsed_result = {
+                    # "type": result.ComponentType,
+                    "response": result,
+                    # "title": result.Title,
+                    # "currency_status": result.CurrencyStatus
                 }
 
             return parsed_result
 
         except suds.WebFault as e:
-            
+
             return e
 
     def __buildReleases(self, releasesArr):
-        #Iterating through the Qual and building unit dict
+        # Iterating through the Qual and building unit dict
         releases = []
         for index, value in enumerate(releasesArr["Release"]):
             release = {
-                "currency" : value.Currency,
-                "date" : value.ReleaseDate,
-                "number" : value.ReleaseNumber,               
+                "currency": value.Currency,
+                "date": value.ReleaseDate,
+                "number": value.ReleaseNumber,
             }
 
-            #Check if release has a unit grid
-            #Some releases don't for some reason
+            # Check if release has a unit grid
+            # Some releases don't for some reason
             if value.UnitGrid is not None:
                 release["units"] = self.__buildUnitGrid(value.UnitGrid)
             else:
-                #Return an empty array if no units
+                # Return an empty array if no units
                 release["units"] = []
 
-            #Check if release has files
+            # Check if release has files
             if value.Files is not None:
                 release["files"] = {
-                    "pdf" : {
-                        "path" : value.Files["ReleaseFile"][0].RelativePath,
-                        "size" : value.Files["ReleaseFile"][0].Size
+                    "pdf": {
+                        "path": value.Files["ReleaseFile"][0].RelativePath,
+                        "size": value.Files["ReleaseFile"][0].Size
                     },
-                    "xml" : {
-                        "path" : value.Files["ReleaseFile"][1].RelativePath,
-                        "size" : value.Files["ReleaseFile"][1].Size
+                    "xml": {
+                        "path": value.Files["ReleaseFile"][1].RelativePath,
+                        "size": value.Files["ReleaseFile"][1].Size
                     },
-                    "doc" : {
-                        "path" : value.Files["ReleaseFile"][2].RelativePath,
-                        "size" : value.Files["ReleaseFile"][2].Size
+                    "doc": {
+                        "path": value.Files["ReleaseFile"][2].RelativePath,
+                        "size": value.Files["ReleaseFile"][2].Size
                     }
                 }
             else:
                 release["files"] = []
 
             releases.append(release)
-        return releases    
-
+        return releases
 
     def __buildUnitGrid(self, unitGridArray):
         units = []
         for unit in unitGridArray["UnitGridEntry"]:
             unit = {
-                "code" : unit.Code,
-                "title" : unit.Title
+                "code": unit.Code,
+                "title": unit.Title
             }
             units.append(unit)
         return units
+
 
 class Organisations(TrainingGovAPI):
     baseurl = "https://ws.sandbox.training.gov.au/Deewr.Tga.WebServices/OrganisationServiceV2.svc?wsdl"
@@ -155,26 +165,25 @@ class Organisations(TrainingGovAPI):
         request = self.client.factory.create('OrganisationDetailsRequest')
         request.IncludeLegacyData = 0
         request.InformationRequested = [{
-            "ShowCodes" : 1,
-            "ShowContacts" : 0,
-            "ShowExplicitScope" : 1,
-            "ShowDataManagers" : 0,
-            "ShowImplicitScope" : 0,
-            "ShowLocations" : 0,
-            "ShowRegistrationManagers" : 0,
-            "ShowRegistrationPeriods" : 0,
-            "ShowResponsibleLegalPersons" : 0,
-            "ShowRestrictions" : 0,
-            "ShowRtoClassifications" : 0,
-            "ShowRtoDeliveryNotification" : 0,
-            "ShowTradingNames" : 0,
-            "ShowUrls" : 0
+            "ShowCodes": 1,
+            "ShowContacts": 0,
+            "ShowExplicitScope": 1,
+            "ShowDataManagers": 0,
+            "ShowImplicitScope": 0,
+            "ShowLocations": 0,
+            "ShowRegistrationManagers": 0,
+            "ShowRegistrationPeriods": 0,
+            "ShowResponsibleLegalPersons": 0,
+            "ShowRestrictions": 0,
+            "ShowRtoClassifications": 0,
+            "ShowRtoDeliveryNotification": 0,
+            "ShowTradingNames": 0,
+            "ShowUrls": 0
         }]
-
 
         request.Code = rto_code
         Organisations.result = self.client.service.GetDetails(request)
-        
+
         scopes = Organisations.result["Scopes"][0]
         accredited_courses = []
         qualifications = []
@@ -186,10 +195,10 @@ class Organisations(TrainingGovAPI):
                 elif component_type == "AccreditedCourse":
                     accredited_courses.append(item)
         formatted_result = {
-            "qualifications" : qualifications,
-            "accredited_courses" : accredited_courses,
-            "qualification_codes" : self.__getCodes(qualifications),
-            "accredited_course_codes" : self.__getCodes(accredited_courses)
+            "qualifications": qualifications,
+            "accredited_courses": accredited_courses,
+            "qualification_codes": self.__getCodes(qualifications),
+            "accredited_course_codes": self.__getCodes(accredited_courses)
         }
 
         return formatted_result
@@ -199,4 +208,3 @@ class Organisations(TrainingGovAPI):
         for component in components:
             codes.append(component.NrtCode)
         return sorted(codes)
-
