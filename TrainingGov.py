@@ -6,6 +6,7 @@ from suds.client import Client
 import suds
 from suds.wsse import *
 from suds.transport.https import WindowsHttpAuthenticated
+from pprint import pprint
 
 
 class TrainingGovAPI:
@@ -22,11 +23,14 @@ class TrainingGovAPI:
 class TrainingComponents(TrainingGovAPI):
     baseurl = "https://ws.sandbox.training.gov.au/Deewr.Tga.WebServices/TrainingComponentServiceV2.svc?wsdl"
     client = Client(baseurl)
+    # print(client)
 
     def __init__(self):
         self.client.set_options(wsse=TrainingGovAPI.security)
 
-    def search(self, filterTerm=None, searchCode=True, searchTitle=False):
+    def search(self, filterTerm=None, searchCode=True, searchTitle=False,
+               trainingpackage=False, qualification=False, skillset=False,
+               unit=False):
         request = self.client.factory.create('TrainingComponentSearchRequest')
 
         # search term
@@ -42,14 +46,17 @@ class TrainingComponents(TrainingGovAPI):
         request.TrainingComponentTypes = [{
             "IncludeAccreditedCourse": 0,
             "IncludeAccreditedCourseModule": 0,
-            "IncludeQualification": 0,
-            "IncludeSkillSet": 0,
-            "IncludeTrainingPackage": 0,
-            "IncludeUnit": 1,
+            "IncludeQualification": qualification,
+            "IncludeSkillSet": skillset,
+            "IncludeTrainingPackage": trainingpackage,
+            "IncludeUnit": unit,
             "IncludeUnitContextualisation": 0
         }]
 
         return self.client.service.Search(request)
+
+    def getClass(self):
+        return self.client.service.GetClassificationSchemes()
 
     def getDetails(self, code, showDeprecated=True):
         request = self.client.factory.create('TrainingComponentDetailsRequest')
@@ -175,7 +182,7 @@ class Organisations(TrainingGovAPI):
             "ShowRegistrationPeriods": 0,
             "ShowResponsibleLegalPersons": 0,
             "ShowRestrictions": 0,
-            "ShowRtoClassifications": 0,
+            "ShowRtoClassifications": 1,
             "ShowRtoDeliveryNotification": 0,
             "ShowTradingNames": 0,
             "ShowUrls": 0
@@ -195,6 +202,7 @@ class Organisations(TrainingGovAPI):
                 elif component_type == "AccreditedCourse":
                     accredited_courses.append(item)
         formatted_result = {
+            "response": Organisations.result,
             "qualifications": qualifications,
             "accredited_courses": accredited_courses,
             "qualification_codes": self.__getCodes(qualifications),
